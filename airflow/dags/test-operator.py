@@ -1,7 +1,7 @@
 import pendulum
 
 from airflow import DAG
-from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
+# from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 from airflow.decorators import dag, task
 
 import sys

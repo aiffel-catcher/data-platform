@@ -1,3 +1,5 @@
 airflow/credentials
 airflow/dags/.DS_Store
 */.DS_Store
+.python-version
+analysis/logs

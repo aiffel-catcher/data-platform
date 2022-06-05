@@ -1,7 +1,7 @@
 from kafka import KafkaProducer
 import json
 
-BROKERS = ['34.64.188.187:9092']
+BROKERS = ['34.64.82.186:9092']
 
 class MessageProducer:
     brokers = ""
@@ -31,12 +31,11 @@ class MessageProducer:
       self.producer.close()
 
 
-# brokers = ['34.64.188.187:9092']
-# topic = 'TutorialTopic'
-# message_producer = MessageProducer(brokers, topic)
+topic = 'test'
+message_producer = MessageProducer(topic)
 
-# data = {'name':'abc', 'email':'abc@example.com'}
-# resp = message_producer.send_msg(data)
-# print(resp)
+data = {'name':'abc', 'email':'abc@example.com'}
+resp = message_producer.send_msg(data)
+print(resp)
 
-# message_producer.close()
+message_producer.close()
