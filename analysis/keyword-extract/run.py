@@ -7,14 +7,18 @@ from common.kafka_consumer import MessageConsumer
 from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
 
-logger = Logging('binary-classification').getLogger()
-KAFKA_TOPIC = 'offline.review.*.0'
+logger = Logging('keyword-extract').getLogger()
+KAFKA_TOPIC = 'streaming.socarreview.binaryclassification.0'
 KAFKA_GROUP_ID = ''
 
 
 def insertDataToBigQuery(data):
   logger.info('[BigQuery] insert data')
-  table_name = 'review'
+  table_name = 'keyword'
+  bigquery_client = BigQueryClient(table_name)
+  bigquery_client.insert_rows(data)
+
+  table_name = 'review_keyword'
   bigquery_client = BigQueryClient(table_name)
   bigquery_client.insert_rows(data)
 
