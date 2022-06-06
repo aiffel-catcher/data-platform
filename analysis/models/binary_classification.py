@@ -1,4 +1,3 @@
-
 # binary classification
 
 # input으로 하나 또는 여러 개의 문장이 들어옴
@@ -14,7 +13,8 @@ import pandas as pd
 from kobert import get_tokenizer
 from kobert import get_pytorch_kobert_model
 
-# BERTDataset
+
+# Dataset
 class BERTDataset(Dataset):
     def __init__(self, dataset, sent_idx, label_idx, bert_tokenizer, max_len,
                  pad, pair):
@@ -30,7 +30,8 @@ class BERTDataset(Dataset):
     def __len__(self):
         return (len(self.labels))
 
-# BERTClassifier
+
+# Classifier
 class BERTClassifier(nn.Module):
     def __init__(self,
                  bert,
