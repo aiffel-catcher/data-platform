@@ -1,13 +1,7 @@
-
 # binary classification
 
-# 1. pip install 코드는 넣지 않음 (있다고 가정하고 코드 작성)
-# 2. input: 하나 또는 여러 개의 문장이 들어옴
-# 3. 모델 학습 코드 필요 없음. 체크포인트를 불러오고, 해당 모델로 예측한 결과를 반환하는 과정만 필요.
-
-# bert 모델 가져오기
-# !pip3 install ipywidgets  # for vscode
-# !pip3 install git+https://git@github.com/SKTBrain/KoBERT.git@master
+# input으로 하나 또는 여러 개의 문장이 들어옴
+# 모델 학습 코드 필요 없음. 체크포인트를 불러오고, 해당 모델로 예측한 결과를 반환하는 과정만 필요.
 
 import torch
 from torch import nn
@@ -19,7 +13,8 @@ import pandas as pd
 from kobert import get_tokenizer
 from kobert import get_pytorch_kobert_model
 
-# BERTDataset
+
+# Dataset
 class BERTDataset(Dataset):
     def __init__(self, dataset, sent_idx, label_idx, bert_tokenizer, max_len,
                  pad, pair):
@@ -35,7 +30,8 @@ class BERTDataset(Dataset):
     def __len__(self):
         return (len(self.labels))
 
-# BERTClassifier
+
+# Classifier
 class BERTClassifier(nn.Module):
     def __init__(self,
                  bert,
