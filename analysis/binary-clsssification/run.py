@@ -1,11 +1,11 @@
 import os
 import sys
 
-sys.path.append(os.path.abspath('../common/'))
+sys.path.append(os.path.abspath('../common'))
 
-from kafka_consumer import MessageConsumer
-from bigquery_operator import BigQueryClient
-from logger import Logging
+from common.kafka_consumer import MessageConsumer
+from common.bigquery_operator import BigQueryClient
+from common.logger import Logging
 
 logger = Logging('binary-classification').getLogger()
 KAFKA_TOPIC = 'offline.review.*.0'
@@ -37,3 +37,7 @@ def run():
     consumer.close()
 
 run()
+
+# [text, text, text] -> [label, label, label]
+# {review_id, text, modified_text, ...} -> text 예측 -> 
+# {review_id, text, modified_text, ..., label}

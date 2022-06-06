@@ -7,9 +7,9 @@ import os
 from airflow import DAG
 from airflow.decorators import dag, task
 from airflow.models import Variable
-# from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
+from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 
-from utils.kafka_operator import MessageProducer
+from utils.kafka_producer import MessageProducer
 from utils.string_util import preprocess_sentence, make_review_id
 from utils.time_util import get_execution_date, get_last_updated_at, set_last_updated_at
 from utils.task_util import task_to_fail, task_to_skip
@@ -19,7 +19,7 @@ DAGBAGS_DIR = Variable.get('DAGBAGS_DIR')
 VIDEO_COUNT = 500
 LAST_UPDATED_AT_PATH = f'{DAGBAGS_DIR}/youtube_last_updated_at'
 TEMPORARY_DATA_PATH = f'{DAGBAGS_DIR}/data'
-GCS_BUCKET_NAME = 'catcher-bucket'
+GCS_BUCKET_NAME = 'aiffel-catcher'
 
 log = logging.getLogger(__name__)
 api_key = 'AIzaSyC5fTURG5XHsfARuifjEmAlmJkOB5lRf7s'
@@ -210,12 +210,12 @@ with DAG(
 
     # - store source data to GCS
     file_info = prepare_temporary_file(preprocess_data)
-    # upload_file = LocalFilesystemToGCSOperator(
-    #     task_id='upload_file_to_GCS',
-    #     src=file_info['src_filepath'],
-    #     dst=file_info['dst_filepath'],
-    #     bucket='catcher-bucket',
-    # )
+    upload_file = LocalFilesystemToGCSOperator(
+        task_id='upload_file_to_GCS',
+        src=file_info['src_filepath'],
+        dst=file_info['dst_filepath'],
+        bucket='catcher-bucket',
+    )
     delete_temporary_file = delete_file(file_info['src_filepath'])
 
     send_to_kafka_task = send_to_kafka(preprocess_data)
@@ -223,5 +223,5 @@ with DAG(
     # [END main_flow]
 
 
-    # source_data >> preprocess_data >> file_info >> upload_file >> delete_temporary_file
+    source_data >> preprocess_data >> file_info >> upload_file >> delete_temporary_file
     source_data >> preprocess_data >> send_to_kafka_task >> record_task
