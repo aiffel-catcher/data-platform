@@ -1,0 +1,4 @@
+[Kafka] get consumer
+{'name': 'abc', 'email': 'abc@example.com'}
+2022-06-05 14:57:08,506 - binary-classification - INFO - [Kafka] get consumer
+2022-06-05 14:57:14,693 - binary-classification - INFO - {'name': 'abc', 'email': 'abc@example.com'}
