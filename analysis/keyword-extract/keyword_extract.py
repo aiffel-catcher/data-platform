@@ -14,15 +14,13 @@ tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
 
 class KeywordExtractor:
   mecab = None
-  texts = []
   top_n = 5
   ngram_range = (2,3)
   stop_words = []
 
 
-  def __init__(self, texts):
+  def __init__(self):
     self.mecab = Mecab()
-    self.texts = texts
     self.setStopwords()
 
 
@@ -71,37 +69,26 @@ class KeywordExtractor:
       return []
 
 
-  def extract_keywords(self):
-    keywords_list = []
+  def extract_keyword(self, text):
+    try:
+      keyphrases = self.extractKeyphrases(text)
+      keyphrases_str = ' '.join([k[0] for k in keyphrases])
 
-    for text in self.texts:
-      try:
-        keyphrases = self.extractKeyphrases(text)
-        keyphrases_str = ' '.join([k[0] for k in keyphrases])
+      keywords = self.extractNouns(keyphrases_str)
+      keywords = list(set(keywords))
 
-        keywords = self.extractNouns(keyphrases_str)
-        keywords = list(set(keywords))
-
-        # 형태소 분석 후 생긴 불용어 필터링
-        for w in keywords:
-          if w in self.stop_words:
-            keywords.remove(w)
-        
-        if len(keywords) == 0:
-          keywords_list.append('')
-        else:
-          keywords_list.append(keywords)
-      except ValueError as err:
-        print(err)
-        keywords_list.append('')
-
-    return keywords_list
-
-
-# data = ['아 왜 안될까 나는 제대로 하고있는걸까 자동차 고장 났다.']
-# keywordExtractor = KeywordExtractor(data)
-# keywords = keywordExtractor.extract_keywords()
-# print(keywords)
+      # 형태소 분석 후 생긴 불용어 필터링
+      for w in keywords:
+        if w in self.stop_words:
+          keywords.remove(w)
+      
+      if len(keywords) == 0:
+        return ''
+      else:
+        return keywords
+    except ValueError as err:
+      print(err)
+      return ''
 
 
 # pip install 'git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'
