@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath('../common'))
 from common.kafka_consumer import MessageConsumer
 from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
-from multilabel_classification import MultilabelModel, get_category_value
+from sentiment_analysis import get_result
 
 logger = Logging('binary-classification').getLogger()
 KAFKA_TOPIC = 'offline.review.*.0'
@@ -24,15 +24,15 @@ def insert_data_to_BigQuery(table_name, data):
 # 2. model Input/Output
 # 3. DB 테이블에 맞게 데이터 변환
 # 4. insert_to_BigQuery
-def process_pipeline(device, model, data, label_cols):
+def process_pipeline(data): # 전체적으로 수정 필요
   print('~')
   try:
     logger.info('[Pipeline] 이진분류 모델 파이프라인')
     comment = data['modified_text']
-    result = get_category_value(device, model.getTok(), model, [comment], label_cols)
+    result = get_result(comment)
     logger.info('[Pipeline] 이진분류 >>>> ', result)
-    for idx, label in enumerate(result[0]):
-      data[label_cols[idx]] = label
+    for key, value in result[0].items():
+      data[key] = value
 
     # # 데이터 변환
     # (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
@@ -53,10 +53,6 @@ def run():
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
-  device = torch.device('cuda:0')
-  label_cols = ['사고', '서비스', '앱', '요금', '상태', '정비', '차량']
-  model = MultilabelModel(device, label_cols).getModel()
-
   try:
     while True:
       message_batch = consumer.poll()
@@ -65,7 +61,7 @@ def run():
         for message in partition_batch:
           value = message.value
           logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
-          process_pipeline(device, model, value, label_cols)
+          process_pipeline(value)
           consumer.commit()
   except Exception as ex:
     logger.error('[Kafka] error >>>> ', ex)

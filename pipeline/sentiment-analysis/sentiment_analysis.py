@@ -3,9 +3,15 @@ import json
 
 
 def get_response(content):
-    data = {
-    "content": content
+    client_id = ""
+    client_secret = ""
+    url = "https://naveropenapi.apigw.ntruss.com/sentiment-analysis/v1/analyze"
+    headers = {
+        "X-NCP-APIGW-API-KEY-ID": client_id,
+        "X-NCP-APIGW-API-KEY": client_secret,
+        "Content-Type": "application/json"
     }
+    data = {"content": content}
     response = requests.post(url, data=json.dumps(data), headers=headers)
     rescode = response.status_code
     if(rescode == 200):
@@ -19,21 +25,16 @@ def get_result(contents):
     for content in contents:
         response = get_response(content)
         response = eval(response.text)
-        a = [response['document']['sentiment'], \
-           response['document']['confidence']['positive'], \
-           response['document']['confidence']['negative'], \
-           response['document']['confidence']['neutral']]
-        result.append([content, *a])
+        sentiment_value = {
+           'sentiment': response['document']['sentiment'], \
+           'positive': response['document']['confidence']['positive'], \
+           'negative': response['document']['confidence']['negative'], \
+           'neutral': response['document']['confidence']['neutral']
+        }
+        result.append(sentiment_value)
     return result
 
 
-client_id = ""
-client_secret = ""
-url="https://naveropenapi.apigw.ntruss.com/sentiment-analysis/v1/analyze"
-headers = {
-    "": client_id,
-    "": client_secret,
-    "Content-Type": "application/json"
-}
 
-result = get_result(comments) # result: [[text, sentiment, positive값, negative값, neutral값], ...]
+
+# result = get_result(comments) # result: [[text, sentiment, positive값, negative값, neutral값], ...]
