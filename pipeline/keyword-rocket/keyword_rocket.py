@@ -12,7 +12,7 @@ def create_df(data_df):
     data_df = data_df.reset_index().sort_index()
     data_df['counter'] = data_df.keyword.str.split()
     data_df['counter'] = data_df.counter.apply(Counter)  # 각 단어들의 빈도수가 딕셔너리 형태로 만들어짐
-    data_df = data_df.sort_values(by='create_at', ascending=False)
+    data_df = data_df.sort_values(by='date', ascending=True)
 
     return data_df
 
@@ -24,15 +24,16 @@ def sum_counter(counters):
     return total
 
 
-def calc_keyword_rocket(input, days, max_count=None):
-    df = create_df(input)
+def calc_keyword_rocket(data, days, max_count=None):
+    data_df = create_df(data)
+    print(data_df)
 
-    LEN = len(df) - days # days를 제외한 나머지
+    LEN = len(data_df) - days # days를 제외한 나머지
 
-    target = df.iloc[-1 * days:]['counter']
+    target = data_df.iloc[-1 * days:]['counter']
     target = sum_counter(target)
 
-    remain = df.iloc[:-1 * days]['counter']
+    remain = data_df.iloc[:-1 * days]['counter']
     remain = sum_counter(remain)
 
     rate = {}
@@ -51,11 +52,12 @@ def calc_keyword_rocket(input, days, max_count=None):
         return rate[:max_count]
 
 
-# result = calc_keyword_rocket(max_count, days, input) # input: ['date', 'keyword1 keyword2 ...']
-
-data = [
-    {'keyword_id': '76c2df5653433c069fa4364d801c3b85', 'keyword': '보상', 'create_at': '2022-05-01T03:34:27'},
-    {'keyword_id': 'dda39dd9ee4fb28c12ec360ac7431072', 'keyword': '카드', 'create_at': '2022-05-01T03:34:27'},
-]
-data_df = pd.DataFrame.from_dict(data)
-calc_keyword_rocket(data_df, 7, input)
+# data = [
+#     {'keyword_id': '76c2df5653433c069fa4364d801c3b85', 'keyword': '보상', 'create_at': '2022-05-01T03:34:27'},
+#     {'keyword_id': '76c2df5653433c069fa4364d801c3b85', 'keyword': '보상', 'create_at': '2022-05-01T03:34:27'},
+#     {'keyword_id': 'dda39dd9ee4fb28c12ec360ac7431072', 'keyword': '카드', 'create_at': '2022-05-01T03:34:27'},
+#     {'keyword_id': '76c2df5653433c069fa4364d801c3b85', 'keyword': '보상', 'create_at': '2022-05-02T03:34:27'},
+#     {'keyword_id': 'dda39dd9ee4fb28c12ec360ac7431072', 'keyword': '카드', 'create_at': '2022-05-02T03:34:27'},
+# ]
+# data_df = pd.DataFrame.from_dict(data)
+# calc_keyword_rocket(data_df, 1)
