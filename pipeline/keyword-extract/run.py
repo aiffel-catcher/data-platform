@@ -17,7 +17,7 @@ KAFKA_GROUP_ID = ''
 
 
 def insert_data_to_BigQuery(table_name, data):
-  logger.info('[BigQuery] insert data')
+  logger.info('[BigQuery] insert data >>>> ', table_name)
   bigquery_client = BigQueryClient(table_name)
   bigquery_client.insert_rows(data)
 
@@ -69,17 +69,25 @@ def get_keywordsreview_data(df, keywords_map):
 
 
 def process_pipeline(keywordExtractor, data):
-  # 키워드 추출 
-  data_df = pd.DataFrame(data)
-  data_df['keywords'] = data_df['modified_text'].apply(keywordExtractor.extract_keywords)
+  try:
+    logger.info('[Pipeline] 키워드추출 모델 파이프라인')
+    # 키워드 추출 
+    data_df = pd.DataFrame(data)
+    data_df['keywords'] = data_df['modified_text'].apply(keywordExtractor.extract_keywords)
+    logger.info('[Pipeline] 키워드추출 >>>> ', data_df['keywords'])
 
-  # 데이터 변환
-  (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
-  keywords_review = get_keywordsreview_data(data_df, keywords_map)
+    # 데이터 변환
+    (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
+    keywords_review = get_keywordsreview_data(data_df, keywords_map)
+    logger.info('[Pipeline] 키워드 메타데이터 추출 >>>> ', keywords_meta)
+    logger.info('[Pipeline] 리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
 
-  # 데이터 삽입
-  insert_data_to_BigQuery('keyword', keywords_meta)
-  insert_data_to_BigQuery('review_keyword', keywords_review)
+    # 데이터 삽입
+    insert_data_to_BigQuery('keyword', keywords_meta)
+    insert_data_to_BigQuery('review_keyword', keywords_review)
+    logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+  except Exception as ex:
+    logger.error('[Pipeline] error >>>> ', ex)
 
 
 def run():
@@ -94,14 +102,12 @@ def run():
 
       for partition_batch in message_batch.values():
         for message in partition_batch:
-          logger.info(message.value)
           value = message.value
-          
+          logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
           process_pipeline(keywordExtractor, value)
-          
           consumer.commit()
   except Exception as ex:
-    logger.error('error >>>> ', ex)
+    logger.error('[Kafka] error >>>> ', ex)
   finally:
     consumer.close()
 

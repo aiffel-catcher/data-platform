@@ -14,6 +14,30 @@ from kobert import get_tokenizer
 from kobert import get_pytorch_kobert_model
 
 
+class BinaryModel():
+    CHECKPOINT_PATH = './checkpoint.pt' # binary classification 모델 체크포인트 경로
+    tok = None
+    
+    def __init__(self):
+        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")    
+        self.tokenizer = get_tokenizer()
+        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
+        self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)
+
+    def loadModel(self, device, path):
+        # 체크포인트 불러오기
+        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(device)
+        checkpoint = torch.load(path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        self.model = model
+
+    def getModel(self):
+        return self.model
+
+    def getTok(self):
+        return self.tok
+
+
 # Dataset
 class BERTDataset(Dataset):
     def __init__(self, dataset, sent_idx, label_idx, bert_tokenizer, max_len,
@@ -65,15 +89,13 @@ class BERTClassifier(nn.Module):
         return self.classifier(out)
 
 
-def get_checkpoint(device, path):
-    # 체크포인트 불러오기
-    model = BERTClassifier(bertmodel, dr_rate=0.5).to(device)
-    checkpoint = torch.load(path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    return model
 
 
-def getRelatedValue(model, comment, checkpoint_path, tok, max_len, batch_size, device):
+
+def get_related_value(model, comment, tok):
+    max_len = 64
+    batch_size = 64
+    device = torch.device('cuda:0')
     commnetslist = []  # 텍스트 데이터를 담을 리스트
     rel_list = []  # 관련 여부 값을 담을 리스트
     for c in comment:  # 모든 댓글
@@ -96,15 +118,3 @@ def getRelatedValue(model, comment, checkpoint_path, tok, max_len, batch_size, d
         rel_list.extend(pred)  # 예측 결과 리스트
 
     return rel_list  # 텍스트 데이터가 쏘카와 관련되는지 여부를 담은 결과
-
-CHECKPOINT_PATH = '' # binary classification 모델 체크포인트 경로
-MAX_LEN = 64
-BATCH_SIZE = 64
-DEVICE = torch.device("cuda:0")
-
-bertmodel, vocab = get_pytorch_kobert_model(cachedir=".cache")
-tokenizer = get_tokenizer()
-tok = nlp.data.BERTSPTokenizer(tokenizer, vocab, lower=False)
-model = get_checkpoint(DEVICE, CHECKPOINT_PATH)
-
-result = getRelatedValue(model, comment, CHECKPOINT_PATH, tok, MAX_LEN, BATCH_SIZE, DEVICE) # comment: 하나 이상의 문장

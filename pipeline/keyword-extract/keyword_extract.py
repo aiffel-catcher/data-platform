@@ -95,9 +95,11 @@ class KeywordExtractor:
 # pip install sklearn
 # pip install pandas
 # pip install numpy
-# pip install torch
 # pip install transformers
 # pip install konlpy
 # pip install sentencepiece
+# pip install torch -f https://download.pytorch.org/whl/torch_stable.html
 # sudo apt-get install curl git (optional)
 # bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)
+# pip install mxnet
+# pip install gluonnlp
