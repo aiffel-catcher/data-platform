@@ -6,20 +6,14 @@ sys.path.append(os.path.abspath('../common'))
 
 import pandas as pd
 from common.string_utils import make_hash_id
+from common.kafka_producer import MessageProducer
 from common.kafka_consumer import MessageConsumer
 from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
 from keyword_extract import KeywordExtractor
+from common.operator_factory import insert_data_to_BigQuery, publish_kafka
 
 logger = Logging('keyword-extract').getLogger()
-KAFKA_TOPIC = 'streaming.socarreview.binaryclassification.0'
-KAFKA_GROUP_ID = ''
-
-
-def insert_data_to_BigQuery(table_name, data):
-  logger.info('[BigQuery] insert data >>>> ', table_name)
-  bigquery_client = BigQueryClient(table_name)
-  bigquery_client.insert_rows(data)
 
 
 def get_keywords_metadata(df):
@@ -70,28 +64,35 @@ def get_keywordsreview_data(df, keywords_map):
 
 def process_pipeline(keywordExtractor, data):
   try:
-    logger.info('[Pipeline] 키워드추출 모델 파이프라인')
+    logger.info('키워드추출 모델 파이프라인')
     # 키워드 추출 
     data_df = pd.DataFrame(data)
     data_df['keywords'] = data_df['modified_text'].apply(keywordExtractor.extract_keywords)
-    logger.info('[Pipeline] 키워드추출 >>>> ', data_df['keywords'])
+    logger.info('키워드추출 >>>> ', data_df['keywords'])
 
     # 데이터 변환
     (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
     keywords_review = get_keywordsreview_data(data_df, keywords_map)
-    logger.info('[Pipeline] 키워드 메타데이터 추출 >>>> ', keywords_meta)
-    logger.info('[Pipeline] 리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
+    logger.info('키워드 메타데이터 추출 >>>> ', keywords_meta)
+    logger.info('리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
 
     # 데이터 삽입
     insert_data_to_BigQuery('keyword', keywords_meta)
     insert_data_to_BigQuery('review_keyword', keywords_review)
-    logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+    logger.info('BigQuery 데이터 저장 완료')
+
+    # 카프카 메세지 publish
+    publish_topic = 'streaming.socarreview.keywords.0'
+    logger.info('Kafka 결과 publish >>>> ', publish_topic)
+    publish_kafka(publish_topic, keywords_review)
+    logger.info('Kafka 결과 publish 완료')
   except Exception as ex:
-    logger.error('[Pipeline] error >>>> ', ex)
+    logger.error('error >>>> ', ex)
 
 
 def run():
-  messageConsumer = MessageConsumer(KAFKA_TOPIC)
+  subscribe_topic = 'streaming.socarreview.binaryclassification.0'
+  messageConsumer = MessageConsumer(subscribe_topic)
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
@@ -110,5 +111,6 @@ def run():
     logger.error('[Kafka] error >>>> ', ex)
   finally:
     consumer.close()
+
 
 run()

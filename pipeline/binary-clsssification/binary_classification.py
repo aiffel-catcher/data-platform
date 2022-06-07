@@ -16,6 +16,9 @@ from kobert import get_pytorch_kobert_model
 
 class BinaryModel():
     CHECKPOINT_PATH = './checkpoint.pt' # binary classification 모델 체크포인트 경로
+    bertmodel = None
+    vocab = None
+    tokenizer = None
     tok = None
     
     def __init__(self):

@@ -1,19 +1,20 @@
 import pandas as pd
 from collections import Counter
+from datetime import datetime
 
 
-def create_df(input):
-    df = pd.DataFrame(input, columns=['date', 'keywords'])
-    df = df.dropna(subset=['keywords'])  # keyword가 하나도 존재하지 않으면 행 삭제
-    df['date'] = df['date'].str.replace('T', ' ')
-    df['date'] = df['date'].str.split().str[0]
+def create_df(data_df):
+    data_df['date'] = data_df['create_at'].apply(
+        lambda c: datetime.fromisoformat(c).strftime('%Y-%m-%d')
+    )
 
-    df = df.groupby('date')['keywords'].apply(lambda x: x.sum())
-    df = df.reset_index().sort_index()
-    df['counter'] = df.keywords.str.split()  # 공백을 기준으로 쪼개짐
-    df['counter'] = df.counter.apply(Counter)  # 각 단어들의 빈도수가 딕셔너리 형태로 만들어짐
+    data_df = data_df.groupby('date')['keyword'].apply(lambda x: ' '.join(x))
+    data_df = data_df.reset_index().sort_index()
+    data_df['counter'] = data_df.keyword.str.split()
+    data_df['counter'] = data_df.counter.apply(Counter)  # 각 단어들의 빈도수가 딕셔너리 형태로 만들어짐
+    data_df = data_df.sort_values(by='create_at', ascending=False)
 
-    return df
+    return data_df
 
 
 def sum_counter(counters):
@@ -23,7 +24,7 @@ def sum_counter(counters):
     return total
 
 
-def func(max_count=None, days, input):
+def calc_keyword_rocket(input, days, max_count=None):
     df = create_df(input)
 
     LEN = len(df) - days # days를 제외한 나머지
@@ -50,4 +51,11 @@ def func(max_count=None, days, input):
         return rate[:max_count]
 
 
-result = func(max_count, days, input) # input: ['date', 'keyword1 keyword2 ...']
+# result = calc_keyword_rocket(max_count, days, input) # input: ['date', 'keyword1 keyword2 ...']
+
+data = [
+    {'keyword_id': '76c2df5653433c069fa4364d801c3b85', 'keyword': '보상', 'create_at': '2022-05-01T03:34:27'},
+    {'keyword_id': 'dda39dd9ee4fb28c12ec360ac7431072', 'keyword': '카드', 'create_at': '2022-05-01T03:34:27'},
+]
+data_df = pd.DataFrame.from_dict(data)
+calc_keyword_rocket(data_df, 7, input)

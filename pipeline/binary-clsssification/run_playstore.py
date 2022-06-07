@@ -5,21 +5,13 @@ import pandas as pd
 sys.path.append(os.path.abspath('../common'))
 
 from common.kafka_consumer import MessageConsumer
-from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
 from binary_classification import BinaryModel, get_related_value
 from common.string_utils import make_hash_id
+from common.operator_factory import insert_data_to_BigQuery, publish_kafka
 
 
 logger = Logging('binary-classification').getLogger()
-KAFKA_TOPIC = 'offline.review.playstore.0'
-KAFKA_GROUP_ID = ''
-
-
-def insert_data_to_BigQuery(table_name, data):
-  logger.info('[BigQuery] insert data')
-  bigquery_client = BigQueryClient(table_name)
-  bigquery_client.insert_rows(data)
 
 
 def get_review(data, is_socar):
@@ -33,29 +25,36 @@ def get_review(data, is_socar):
   }
   return review
 
-  
+
 def process_pipeline(model, data):
-  print('~')
   try:
-    logger.info('[Pipeline] 이진분류 모델 파이프라인')
+    logger.info('이진분류 모델 파이프라인')
+
     # 이진분류
     comment = data['modified_text']
     result = get_related_value(model, [comment], model.getTok()) # comment: 하나 이상의 문장
-    logger.info('[Pipeline] 이진분류 >>>> ', result)
+    logger.info('이진분류 >>>> ', result)
 
     # 데이터 변환
     review = get_review(data, result[0])
-    logger.info('[Pipeline] 리뷰 데이터 맵핑 변환>>>> ', review)
+    logger.info('리뷰 데이터 맵핑 변환>>>> ', review)
 
     # 데이터 삽입
     insert_data_to_BigQuery('review', review)
-    logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+    logger.info('BigQuery 데이터 저장 완료')
+
+    # 카프카 메세지 publish
+    publish_topic = 'streaming.socarreview.binaryclassification.0'
+    logger.info('Kafka publish >>>> ', publish_topic)
+    publish_kafka(publish_topic, review)
+    logger.info('Kafka publish 완료')
   except Exception as ex:
-    logger.error('[Pipeline] error >>>> ', ex)
+    logger.error('error >>>> ', ex)
 
 
 def run():
-  messageConsumer = MessageConsumer(KAFKA_TOPIC)
+  subscribe_topic = 'offline.review.playstore.0'
+  messageConsumer = MessageConsumer(subscribe_topic)
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
