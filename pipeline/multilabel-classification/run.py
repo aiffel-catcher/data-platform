@@ -1,61 +1,78 @@
 import os
 import sys
-import pandas as pd
 import torch
 
 sys.path.append(os.path.abspath('../common'))
 
+from common.string_utils import make_hash_id
 from common.kafka_consumer import MessageConsumer
-from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
 from multilabel_classification import MultilabelModel, get_category_value
-
-logger = Logging('binary-classification').getLogger()
-KAFKA_TOPIC = 'offline.review.*.0'
-KAFKA_GROUP_ID = ''
+from common.operator_factory import insert_data_to_BigQuery, select_category_all
 
 
-def insert_data_to_BigQuery(table_name, data):
-  logger.info('[BigQuery] insert data')
-  bigquery_client = BigQueryClient(table_name)
-  bigquery_client.insert_rows(data)
+logger = Logging('multilabel-classification').getLogger()
 
 
-# 2. model Input/Output
-# 3. DB 테이블에 맞게 데이터 변환
-# 4. insert_to_BigQuery
-def process_pipeline(device, model, data, label_cols):
+def get_review_category(data, category_map):
+  categories = category_map.keys()
+  for category in categories:
+    if data[category] == 0:
+      continue
+
+    category_id = category_map[category]
+    review_id = data['review_id']
+    data = {
+        'review_category_id': make_hash_id(review_id+category_id),
+        'category_id': category_id,
+        'review_id': review_id
+    }
+  return data
+
+
+def get_category_map(category):
+  category_map = {}
+
+  for m in category:
+    category_map[m['category_name']] = m['category_id']
+  
+  return category_map
+
+  
+def process_pipeline(device, model, data, label_cols, category_map):
   print('~')
   try:
-    logger.info('[Pipeline] 이진분류 모델 파이프라인')
+    logger.info('[Pipeline] 멀티라벨분류 모델 파이프라인')
+    # 멀티라벨분류 모델
     comment = data['modified_text']
     result = get_category_value(device, model.getTok(), model, [comment], label_cols)
-    logger.info('[Pipeline] 이진분류 >>>> ', result)
+    logger.info('[Pipeline] 멀티라벨분류 >>>> ', result)
     for idx, label in enumerate(result[0]):
       data[label_cols[idx]] = label
 
-    # # 데이터 변환
-    # (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
-    # keywords_review = get_keywordsreview_data(data_df, keywords_map)
-    # logger.info('[Pipeline] 키워드 메타데이터 추출 >>>> ', keywords_meta)
-    # logger.info('[Pipeline] 리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
+    # 데이터 변환
+    review_category = get_review_category(data, category_map)
+    logger.info('[Pipeline] 리뷰-키워드 데이터 변환>>>> ', review_category)
 
     # 데이터 삽입
-    # insert_data_to_BigQuery('keyword', keywords_meta)
-    # insert_data_to_BigQuery('review_keyword', keywords_review)
-    # logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+    insert_data_to_BigQuery('review_category', [get_review_category])
+    logger.info('[Pipeline] BigQuery 데이터 저장 완료')
   except Exception as ex:
     logger.error('[Pipeline] error >>>> ', ex)
 
 
 def run():
-  messageConsumer = MessageConsumer(KAFKA_TOPIC)
+  subscribe_topic = 'streaming.socarreview.keywords.0'
+  messageConsumer = MessageConsumer(subscribe_topic)
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
   device = torch.device('cuda:0')
   label_cols = ['사고', '서비스', '앱', '요금', '상태', '정비', '차량']
   model = MultilabelModel(device, label_cols).getModel()
+
+  category_all = select_category_all()
+  category_map = get_category_map(category_all)
 
   try:
     while True:
@@ -65,17 +82,12 @@ def run():
         for message in partition_batch:
           value = message.value
           logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
-          process_pipeline(device, model, value, label_cols)
+          process_pipeline(device, model, value, label_cols, category_map)
           consumer.commit()
   except Exception as ex:
     logger.error('[Kafka] error >>>> ', ex)
   finally:
     consumer.close()
 
+
 run()
-
-
-# 1. Kafka consuming
-# 2. model Input/Output
-# 3. DB 테이블에 맞게 데이터 변환
-# 4. insert_to_BigQuery

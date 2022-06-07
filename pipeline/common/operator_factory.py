@@ -12,6 +12,10 @@ def select_keyword_all():
   return bigquery_client.select_all_keywords()
 
 
+def select_category_all():
+  return bigquery_client.select_all_category()
+
+
 def insert_data_to_BigQuery(table_name, data):
   bigquery_client.insert_rows(table_name, data)
 

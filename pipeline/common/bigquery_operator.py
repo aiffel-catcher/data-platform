@@ -23,7 +23,14 @@ class BigQueryClient:
 
   def select_all_keywords(self):
     table_id = 'aiffel-gn3-6.socar.keyword'
-    result = self.client.insert_rows_json(table_id)
+    result = self.client.insert_rows_json(table_id) # TODO
+    print("rows have been selected >>>> ", len(result))
+    return result
+
+  
+  def select_all_category(self):
+    table_id = 'aiffel-gn3-6.socar.category'
+    result = self.client.insert_rows_json(table_id) # TODO
     print("rows have been selected >>>> ", len(result))
     return result
 
