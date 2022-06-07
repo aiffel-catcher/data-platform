@@ -4,60 +4,54 @@ import math
 
 sys.path.append(os.path.abspath('../common'))
 
-import pandas as pd
 from common.string_utils import make_hash_id
-from common.kafka_producer import MessageProducer
 from common.kafka_consumer import MessageConsumer
-from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
 from keyword_extract import KeywordExtractor
-from common.operator_factory import insert_data_to_BigQuery, publish_kafka
+from common.operator_factory import insert_data_to_BigQuery, publish_kafka, select_keyword_all
 
 logger = Logging('keyword-extract').getLogger()
 
 
-def get_keywords_metadata(df):
+def get_keywords_metadata(extracted_keywords, keywords_from_db):
   keywords_map = {}
-  keywords_series = df['keywords']
+  keywords_meta = []
 
-  # 키워드 : keyword_id
-  for keywords in keywords_series:
-    if keywords == 'nan' or keywords == None or keywords != keywords:
+  for o in keywords_from_db:
+    keywords_map[o['keyword']] = o['keyword_id']
+  
+  for keyword in extracted_keywords:
+    if keyword in keywords_map:
       continue
 
-    for key in keywords.split(' '):
-      if key in keywords_map:
-        continue
-
-      keywords_map[key] = make_hash_id(key)
-
-  keywords_meta = []
-  for key in keywords_map.keys():
-    d = {'keyword_id': keywords_map[key], 'keyword': key}
-    keywords_meta.append(d)
+    keyword_id = make_hash_id(keyword)
+    keywords_map[keyword] = keyword_id
+    keywords_meta.append({'keyword_id': keyword_id, 'keyword': keyword})
 
   return (keywords_map, keywords_meta)
 
 
-def get_keywordsreview_data(df, keywords_map):
+def get_keywordsreview_data(data, keywords_map):
   review_keyword_data = []
 
-  for (i, d) in df.iterrows():
-    keywords = d['keywords']
-    if keywords == 'nan' or keywords == None or keywords != keywords:
-      continue
+  keywords = data['keywords']
+  if len(keywords) == 0:
+    return []
 
-    review_id = d['review_id']
-    keywords_list = keywords.split(' ')
+  review_id = data['review_id']
 
-    for keyword in keywords_list:
-      keyword_id = keywords_map[keyword]
+  for k in keywords:
+    keyword_id = keywords_map[k]
 
-      if keyword_id == None or keyword_id == '':
-        continue
+    if keyword_id == None or keyword_id == '':
+      continue 
 
-      data = {'review_keyword_id': make_hash_id(review_id+keyword_id), 'keyword_id': keyword_id, 'review_id': review_id}
-      review_keyword_data.append(data)
+    data = {
+      'review_keyword_id': make_hash_id(review_id+keyword_id),
+      'keyword_id': keyword_id,
+      'review_id': review_id
+    }
+    review_keyword_data.append(data)
 
   return review_keyword_data
 
@@ -65,14 +59,17 @@ def get_keywordsreview_data(df, keywords_map):
 def process_pipeline(keywordExtractor, data):
   try:
     logger.info('키워드추출 모델 파이프라인')
+    # 기존 모든 키워드 가져오기
+    keywords_from_db = select_keyword_all()
+
     # 키워드 추출 
-    data_df = pd.DataFrame(data)
-    data_df['keywords'] = data_df['modified_text'].apply(keywordExtractor.extract_keywords)
-    logger.info('키워드추출 >>>> ', data_df['keywords'])
+    extracted_keywords = keywordExtractor.extract_keywords(data['modified_text'])
+    data['keywords'] = extracted_keywords
+    logger.info('키워드추출 >>>> ', data)
 
     # 데이터 변환
-    (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
-    keywords_review = get_keywordsreview_data(data_df, keywords_map)
+    (keywords_map, keywords_meta) = get_keywords_metadata(extracted_keywords, keywords_from_db)
+    keywords_review = get_keywordsreview_data(data, keywords_map)
     logger.info('키워드 메타데이터 추출 >>>> ', keywords_meta)
     logger.info('리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
 

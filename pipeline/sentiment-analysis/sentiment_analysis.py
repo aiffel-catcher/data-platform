@@ -20,7 +20,7 @@ def get_response(content):
         print("Error : " + response.text)
 
 
-def get_result(contents):
+def analysis_sentiment(contents):
     result = []
     for content in contents:
         response = get_response(content)
@@ -37,4 +37,4 @@ def get_result(contents):
 
 
 
-# result = get_result(comments) # result: [[text, sentiment, positive값, negative값, neutral값], ...]
+# result = analysis_sentiment(comments) # result: [[text, sentiment, positive값, negative값, neutral값], ...]

@@ -8,11 +8,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-model = BertModel.from_pretrained('skt/kobert-base-v1')
-tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
 
 
 class KeywordExtractor:
+  model = None
+  tokenizer = None
   mecab = None
   top_n = 5
   ngram_range = (2,3)
@@ -20,6 +20,8 @@ class KeywordExtractor:
 
 
   def __init__(self):
+    self.model = BertModel.from_pretrained('skt/kobert-base-v1')
+    self.tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
     self.mecab = Mecab()
     self.setStopwords()
 
@@ -37,8 +39,8 @@ class KeywordExtractor:
 
 
   def runKoBERTmodel(self, texts):
-    inputs = tokenizer.batch_encode_plus(texts)
-    out = model(input_ids = torch.tensor(inputs['input_ids']),
+    inputs = self.tokenizer.batch_encode_plus(texts)
+    out = self.model(input_ids = torch.tensor(inputs['input_ids']),
               attention_mask = torch.tensor(inputs['attention_mask']))
     
     return out.pooler_output
@@ -82,13 +84,13 @@ class KeywordExtractor:
         if w in self.stop_words:
           keywords.remove(w)
       
-      if len(keywords) == 0:
-        return ''
+      if keywords == None or len(keywords) == 0:
+        return []
       else:
         return keywords
     except ValueError as err:
       print(err)
-      return ''
+      return []
 
 
 # pip install 'git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'

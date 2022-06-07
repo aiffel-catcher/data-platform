@@ -48,6 +48,7 @@ def get_keyword_rocket(data, keywords_map):
 def process_pipeline():
   try:
     logger.info('키워드 급상승 모델 파이프라인')
+    # 데이터 가져오기 : 현재 14일치 
     data_from_db = select_keyword_rocket_data() # 	[[keyword_id keyword create_at], ... ]
     logger.info('키워드 데이터 가져오기 >>>> ', data_from_db)
 
@@ -58,11 +59,11 @@ def process_pipeline():
 
     # 데이터 변환
     keyword_map = get_keyword_map(data_from_db)
-    keyword_rocket = get_keyword_rocket(calculated_data, keyword_map)
-    logger.info('키워드 급상승  데이터 변환>>>> ', keyword_rocket)
+    keyword_rockets = get_keyword_rocket(calculated_data, keyword_map)
+    logger.info('키워드 급상승  데이터 변환>>>> ', keyword_rockets)
 
     # 데이터 삽입
-    insert_data_to_BigQuery('keyword_rocket', keyword_rocket)
+    insert_data_to_BigQuery('keyword_rocket', keyword_rockets)
     logger.info('BigQuery 데이터 저장 완료')
   except Exception as ex:
     logger.error('error >>>> ', ex)

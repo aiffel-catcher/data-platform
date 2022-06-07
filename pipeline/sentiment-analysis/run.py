@@ -1,55 +1,59 @@
 import os
 import sys
-import pandas as pd
-import torch
 
 sys.path.append(os.path.abspath('../common'))
 
 from common.kafka_consumer import MessageConsumer
-from common.bigquery_operator import BigQueryClient
 from common.logger import Logging
-from sentiment_analysis import get_result
+from sentiment_analysis import analysis_sentiment
+from common.operator_factory import insert_data_to_BigQuery, publish_kafka
+from common.string_utils import make_hash_id
 
-logger = Logging('binary-classification').getLogger()
-KAFKA_TOPIC = 'offline.review.*.0'
-KAFKA_GROUP_ID = ''
-
-
-def insert_data_to_BigQuery(table_name, data):
-  logger.info('[BigQuery] insert data')
-  bigquery_client = BigQueryClient(table_name)
-  bigquery_client.insert_rows(data)
+logger = Logging('sentiment-analysis').getLogger()
 
 
-# 2. model Input/Output
-# 3. DB 테이블에 맞게 데이터 변환
-# 4. insert_to_BigQuery
-def process_pipeline(data): # 전체적으로 수정 필요
-  print('~')
+def get_review_sentiment(data):
+  hash_key = data['review_id']+data['sentiment']
+  return {
+    'review_sentiment_id': make_hash_id(hash_key),
+    'review_id': data['review_id'],
+    'sentiment': data['sentiment'],
+    'positive': float(data['positive']),
+    'negative': float(data['negative']),
+    'neutral': float(data['neutral'])
+  }
+
+
+def process_pipeline(data):
   try:
-    logger.info('[Pipeline] 이진분류 모델 파이프라인')
+    logger.info('[Pipeline] 감성분석 모델 파이프라인')
+    # 감성분석 
     comment = data['modified_text']
-    result = get_result(comment)
-    logger.info('[Pipeline] 이진분류 >>>> ', result)
+    result = analysis_sentiment(comment)
     for key, value in result[0].items():
       data[key] = value
+    logger.info('[Pipeline] 감성분석 >>>> ', data)
 
-    # # 데이터 변환
-    # (keywords_map, keywords_meta) = get_keywords_metadata(data_df)
-    # keywords_review = get_keywordsreview_data(data_df, keywords_map)
-    # logger.info('[Pipeline] 키워드 메타데이터 추출 >>>> ', keywords_meta)
-    # logger.info('[Pipeline] 리뷰-키워드 데이터 맵핑 변환>>>> ', keywords_review)
+    # 데이터 변환
+    review_sentiment = get_review_sentiment(data)
+    logger.info('[Pipeline] 감성분석 데이터 변환>>>> ', review_sentiment)
 
     # 데이터 삽입
-    # insert_data_to_BigQuery('keyword', keywords_meta)
-    # insert_data_to_BigQuery('review_keyword', keywords_review)
-    # logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+    insert_data_to_BigQuery('review_sentiment', [review_sentiment])
+    logger.info('[Pipeline] BigQuery 데이터 저장 완료')
+
+    # 카프카 메세지 publish
+    publish_topic = 'streaming.socarreview.keywords.0'
+    logger.info('Kafka 결과 publish >>>> ', publish_topic)
+    publish_kafka(publish_topic, review_sentiment)
+    logger.info('Kafka 결과 publish 완료')
   except Exception as ex:
     logger.error('[Pipeline] error >>>> ', ex)
 
 
 def run():
-  messageConsumer = MessageConsumer(KAFKA_TOPIC)
+  subscribe_topic = 'streaming.socarreview.binaryclassification.0'
+  messageConsumer = MessageConsumer(subscribe_topic)
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
@@ -68,10 +72,5 @@ def run():
   finally:
     consumer.close()
 
+
 run()
-
-
-# 1. Kafka consuming
-# 2. model Input/Output
-# 3. DB 테이블에 맞게 데이터 변환
-# 4. insert_to_BigQuery

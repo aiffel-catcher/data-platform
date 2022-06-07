@@ -32,14 +32,15 @@ def process_pipeline(model, data):
     # 이진분류
     comment = data['modified_text']
     result = get_related_value(model, [comment], model.getTok()) # comment: 하나 이상의 문장
-    logger.info('이진분류 >>>> ', result)
+    is_socar = result[0]
+    logger.info('이진분류 >>>> ', is_socar)
 
     # 데이터 변환
-    review = get_review(data, result[0])
+    review = get_review(data, is_socar)
     logger.info('리뷰 데이터 맵핑 변환>>>> ', review)
 
     # 데이터 삽입
-    insert_data_to_BigQuery('review', review)
+    insert_data_to_BigQuery('review', [review])
     logger.info('BigQuery 데이터 저장 완료')
 
     # 카프카 메세지 publish

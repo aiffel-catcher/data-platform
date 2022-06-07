@@ -16,9 +16,16 @@ class BigQueryClient:
     table_id = 'aiffel-gn3-6.socar.' + table_name
     errors = self.client.insert_rows_json(table_id, data)
     if errors == []:
-        print("New rows have been added >>>> ", data)
+      print("New rows have been added >>>> ", data)
     else:
-        print("Encountered errors while inserting rows: {}".format(errors))
+      print("Encountered errors while inserting rows: {}".format(errors))
+
+
+  def select_all_keywords(self):
+    table_id = 'aiffel-gn3-6.socar.keyword'
+    result = self.client.insert_rows_json(table_id)
+    print("rows have been selected >>>> ", len(result))
+    return result
 
 
   def select_keywords_for_rocket(self):

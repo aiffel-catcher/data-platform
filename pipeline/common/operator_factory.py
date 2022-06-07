@@ -8,6 +8,10 @@ def select_keyword_rocket_data():
   return bigquery_client.select_keywords_for_rocket()
 
 
+def select_keyword_all():
+  return bigquery_client.select_all_keywords()
+
+
 def insert_data_to_BigQuery(table_name, data):
   bigquery_client.insert_rows(table_name, data)
 
