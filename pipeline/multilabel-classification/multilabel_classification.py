@@ -16,7 +16,7 @@ from kobert import get_pytorch_kobert_model
 
 # Dataset
 class Data_for_BERT(Dataset):
-    def __init__(self, dataset, max_len, pad, pair, label_cols):
+    def __init__(self, dataset, tok, max_len, pad, pair, label_cols):
         transform = nlp.data.BERTSentenceTransform(tok, max_seq_length=max_len, pad=pad, pair=pair)
         self.sentences = [transform([txt]) for txt in dataset.modified_text]
         self.labels = dataset[label_cols].values
@@ -30,7 +30,7 @@ class Data_for_BERT(Dataset):
 
 # Classifier
 class BERTClassifier(nn.Module):
-    def __init__(self, hidden_size=768, num_classes=1, dr_rate=None, params=None):
+    def __init__(self, bertmodel, hidden_size=768, num_classes=1, dr_rate=None, params=None):
         super(BERTClassifier, self).__init__()
         self.bert = bertmodel
         self.dr_rate = dr_rate
@@ -59,22 +59,48 @@ class BERTClassifier(nn.Module):
         return self.classifier(out)
 
 
-def get_checkpoint(label_cols, device, path):
-    num_classes = len(label_cols)
-    model = model = BERTClassifier(num_classes=num_classes).to(device)
-    checkpoint = torch.load(path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    return model
+class MultilabelModel():
+    CHECKPOINT_PATH = './checkpoint.pt'  # multi-label classification 모델 체크포인트 경로
+    bertmodel = None
+    vocab = None
+    tokenizer = None
+    tok = None
+    model = None
+
+    def __init__(self, device, label_cols):
+        self.device = device
+        self.num_classes = len(label_cols)
+        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")
+        self.tokenizer = get_tokenizer()
+        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
+        self.loadModel(self.device, self.CHECKPOINT_PATH)
 
 
-def getCategoryLabel(model, comment, tok, max_len, batch_size, device, label_cols, threshold):
+    def loadModel(self, device, path):
+        model = BERTClassifier(self.bertmodel, num_classes=self.num_classes).to(device)
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        self.model = model
+
+    def getModel(self):
+        return self.model
+
+    def getTok(self):
+        return self.tok
+
+
+def get_category_value(device, tok, model, comment, label_cols):
+    max_len= 64
+    batch_size = 64
+    threshold = 0.5
+
     comments_list = []
     for c in comment:
         comments_list.append([c, 5, 5, 5, 5, 5, 5, 5])
 
     pdData = pd.DataFrame(comments_list, columns=['modified_text', *label_cols])
-    data_inference = Data_for_BERT(pdData, MAX_LEN, True, False, label_cols=label_cols)
-    inference_loader = DataLoader(data_inference, batch_size=BATCH_SIZE,
+    data_inference = Data_for_BERT(pdData, tok, max_len, True, False, label_cols=label_cols)
+    inference_loader = DataLoader(data_inference, batch_size=batch_size,
                                   num_workers=4, shuffle=False, pin_memory=True)
 
     category_pred = []
@@ -93,21 +119,6 @@ def getCategoryLabel(model, comment, tok, max_len, batch_size, device, label_col
 
     result = []
     for idx in range(len(category_pred)):
-        result.append([comment[idx], *category_pred[idx]])
+        result.append(category_pred[idx])
 
     return result
-
-
-CHECKPOINT_PATH = '' # multi-label classification 모델 체크포인트 경로
-MAX_LEN = 64
-BATCH_SIZE = 64
-THRESHOLD = 0.5
-DEVICE = torch.device("cuda:0")
-label_cols = ['사고', '서비스', '앱', '요금', '상태', '정비', '차량']
-
-bertmodel, vocab = get_pytorch_kobert_model(cachedir=".cache")
-tokenizer = get_tokenizer()
-tok = nlp.data.BERTSPTokenizer(tokenizer, vocab, lower=False)
-model = get_checkpoint(label_cols, DEVICE, CHECKPOINT_PATH)
-
-result = getCategoryLabel(model, comment, tok, MAX_LEN, BATCH_SIZE, DEVICE, label_cols, THRESHOLD)

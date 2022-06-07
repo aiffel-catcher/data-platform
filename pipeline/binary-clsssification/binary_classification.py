@@ -14,30 +14,6 @@ from kobert import get_tokenizer
 from kobert import get_pytorch_kobert_model
 
 
-class BinaryModel():
-    CHECKPOINT_PATH = './checkpoint.pt' # binary classification 모델 체크포인트 경로
-    tok = None
-    
-    def __init__(self):
-        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")    
-        self.tokenizer = get_tokenizer()
-        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
-        self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)
-
-    def loadModel(self, device, path):
-        # 체크포인트 불러오기
-        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(device)
-        checkpoint = torch.load(path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        self.model = model
-
-    def getModel(self):
-        return self.model
-
-    def getTok(self):
-        return self.tok
-
-
 # Dataset
 class BERTDataset(Dataset):
     def __init__(self, dataset, sent_idx, label_idx, bert_tokenizer, max_len,
@@ -89,7 +65,28 @@ class BERTClassifier(nn.Module):
         return self.classifier(out)
 
 
+class BinaryModel():
+    CHECKPOINT_PATH = './checkpoint.pt'  # binary classification 모델 체크포인트 경로
+    tok = None
 
+    def __init__(self):
+        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")
+        self.tokenizer = get_tokenizer()
+        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
+        self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)
+
+    def loadModel(self, device, path):
+        # 체크포인트 불러오기
+        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(device)
+        checkpoint = torch.load(path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        self.model = model
+
+    def getModel(self):
+        return self.model
+
+    def getTok(self):
+        return self.tok
 
 
 def get_related_value(model, comment, tok):
