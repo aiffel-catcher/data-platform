@@ -22,17 +22,19 @@ class BigQueryClient:
 
 
   def select_all_keywords(self):
-    table_id = 'aiffel-gn3-6.socar.keyword'
-    result = self.client.insert_rows_json(table_id) # TODO
-    print("rows have been selected >>>> ", len(result))
-    return result
+    sql = "SELECT * FROM aiffel-gn3-6.socar.keyword"
+    query_job = self.client.query(sql)
+    results = query_job.result()
+    print("rows have been selected >>>> ", results.total_rows)
+    return results
 
   
   def select_all_category(self):
-    table_id = 'aiffel-gn3-6.socar.category'
-    result = self.client.insert_rows_json(table_id) # TODO
-    print("rows have been selected >>>> ", len(result))
-    return result
+    sql = "SELECT * FROM aiffel-gn3-6.socar.category"
+    query_job = self.client.query(sql)
+    results = query_job.result()
+    print("rows have been selected >>>> ", results.total_rows)
+    return results
 
 
   def select_keywords_for_rocket(self):
@@ -48,8 +50,8 @@ class BigQueryClient:
       "AND rv.create_at <= cast('{1} 23:59:59' AS TIMESTAMP)"
       ).format(start_at.strftime('%Y-%m-%d'), end_at.strftime('%Y-%m-%d'))
     query_job = self.client.query(sql)
-
     results = query_job.result()
+    print("rows have been selected >>>> ", results.total_rows)
     return results
 
 

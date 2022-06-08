@@ -1,4 +1,7 @@
+# coding: utf-8
 import sys
+import json
+import traceback
 
 sys.path.insert(0, '../common')
 
@@ -50,23 +53,22 @@ def process_pipeline():
     logger.info('키워드 급상승 모델 파이프라인')
     # 데이터 가져오기 : 현재 14일치 
     data_from_db = select_keyword_rocket_data() # 	[[keyword_id keyword create_at], ... ]
-    logger.info('키워드 데이터 가져오기 >>>> ', data_from_db)
+    logger.info('키워드 데이터 가져옴')
 
     # 키워드 급상승 
-    data_df = pd.DataFrame(input, columns=['keyword_id', 'keyword', 'create_at'])
-    calculated_data = calc_keyword_rocket(data_df, 7)
-    logger.info('키워드 급상승  >>>> ', calculated_data)
+    calculated_data = calc_keyword_rocket(data_from_db, 7)
+    logger.info('키워드 급상승 집계')
 
     # 데이터 변환
     keyword_map = get_keyword_map(data_from_db)
     keyword_rockets = get_keyword_rocket(calculated_data, keyword_map)
-    logger.info('키워드 급상승  데이터 변환>>>> ', keyword_rockets)
+    logger.info('키워드 급상승 데이터 변환>>>> ' + json.dumps(keyword_rockets))
 
     # 데이터 삽입
     insert_data_to_BigQuery('keyword_rocket', keyword_rockets)
     logger.info('BigQuery 데이터 저장 완료')
-  except Exception as ex:
-    logger.error('error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
 
 
 def run():
@@ -82,11 +84,11 @@ def run():
       for partition_batch in message_batch.values():
         for message in partition_batch:
           value = message.value
-          logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
+          logger.info('[Kafka] 데이터 Subscribe >>>> ' + json.dumps(value))
           process_pipeline()
           consumer.commit()
-  except Exception as ex:
-    logger.error('[Kafka] error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
   finally:
     consumer.close()
 

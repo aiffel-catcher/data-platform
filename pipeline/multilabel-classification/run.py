@@ -1,4 +1,6 @@
+# coding: utf-8
 import sys
+import traceback
 
 sys.path.insert(0, '../common')
 
@@ -55,8 +57,8 @@ def process_pipeline(device, model, data, label_cols, category_map):
     # 데이터 삽입
     insert_data_to_BigQuery('review_category', [get_review_category])
     logger.info('[Pipeline] BigQuery 데이터 저장 완료')
-  except Exception as ex:
-    logger.error('[Pipeline] error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
 
 
 def run():
@@ -82,8 +84,8 @@ def run():
           logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
           process_pipeline(device, model, value, label_cols, category_map)
           consumer.commit()
-  except Exception as ex:
-    logger.error('[Kafka] error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
   finally:
     consumer.close()
 

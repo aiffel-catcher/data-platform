@@ -71,7 +71,7 @@ class KeywordExtractor:
       return []
 
 
-  def extract_keyword(self, text):
+  def extract_keywords(self, text):
     try:
       keyphrases = self.extractKeyphrases(text)
       keyphrases_str = ' '.join([k[0] for k in keyphrases])
@@ -105,3 +105,6 @@ class KeywordExtractor:
 # bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)
 # pip install mxnet
 # pip install gluonnlp
+# pip install google.cloud.bigquery
+# pip install google-cloud
+# pip install --upgrade google-api-python-client

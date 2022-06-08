@@ -19,7 +19,7 @@ class MessageProducer:
 
     def send_msg(self, topic, msg):
         print("sending message")
-        future = self.producer.send(self.topic, msg)
+        future = self.producer.send(topic, msg)
         self.producer.flush()
         future.get(timeout=60)
         print("message sent successfully")

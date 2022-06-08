@@ -1,4 +1,7 @@
+# coding: utf-8
 import sys
+import json
+import traceback
 
 sys.path.insert(0, '../common')
 
@@ -6,7 +9,8 @@ from kafka_consumer import MessageConsumer
 from logger import Logging
 from binary_classification import BinaryModel, get_related_value
 from string_utils import make_hash_id
-from operator_factory import insert_data_to_BigQuery, publish_kafka
+from operator_factory import insert_data_to_BigQuery
+from kafka_producer import MessageProducer
 
 
 logger = Logging('binary-classification').getLogger()
@@ -24,7 +28,7 @@ def get_review(data, is_socar):
   return review
 
 
-def process_pipeline(model, data):
+def process_pipeline(model, data, messageProducer):
   try:
     logger.info('이진분류 모델 파이프라인')
 
@@ -32,11 +36,11 @@ def process_pipeline(model, data):
     comment = data['modified_text']
     result = get_related_value(model, [comment], model.getTok()) # comment: 하나 이상의 문장
     is_socar = result[0]
-    logger.info('이진분류 >>>> ', is_socar)
+    logger.info('이진분류 >>>> ' + str(is_socar))
 
     # 데이터 변환
     review = get_review(data, is_socar)
-    logger.info('리뷰 데이터 맵핑 변환>>>> ', review)
+    logger.info('리뷰 데이터 맵핑 변환>>>> ' + json.dumps(review))
 
     # 데이터 삽입
     insert_data_to_BigQuery('review', [review])
@@ -44,16 +48,18 @@ def process_pipeline(model, data):
 
     # 카프카 메세지 publish
     publish_topic = 'streaming.socarreview.binaryclassification.0'
-    logger.info('Kafka publish >>>> ', publish_topic)
-    publish_kafka(publish_topic, review)
+    logger.info('Kafka publish >>>> ' + publish_topic)
+    messageProducer.send_msg(publish_topic, review)
     logger.info('Kafka publish 완료')
-  except Exception as ex:
-    logger.error('error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
 
 
 def run():
   subscribe_topic = 'offline.review.playstore.0'
   messageConsumer = MessageConsumer(subscribe_topic)
+  messageProducer = MessageProducer()
+
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
@@ -66,13 +72,14 @@ def run():
       for partition_batch in message_batch.values():
         for message in partition_batch:
           value = message.value
-          logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
-          process_pipeline(model, value)
+          logger.info('[Kafka] 데이터 Subscribe >>>> ' + json.dumps(value))
+          process_pipeline(model, value, messageProducer)
           consumer.commit()
-  except Exception as ex:
-    logger.error('[Kafka] error >>>> ', ex)
+  except Exception:
+    logger.error(traceback.format_exc())
   finally:
     consumer.close()
+    messageProducer.close()
 
 
 run()
