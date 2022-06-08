@@ -15,13 +15,14 @@
 3.	부정적인 의견을 기반으로 주요 불만 키워드를 파악할 수 있도록 카테고리로 분류
 4.	어떤 내용이 부정적인지 정확한 데이터를 제공하고자, 실제 리뷰 데이터 원본 제공
 
-## 🏃: Project Details
+## 🏃 Project Details
 ![전체진행흐름도](https://user-images.githubusercontent.com/85794900/172643527-295ab654-3e09-47ec-9b4f-0237a3f95d93.png)
 
 ![이진분류](https://user-images.githubusercontent.com/85794900/172643828-f8b1bda9-a01f-41d4-91fd-7c4b0f87044e.png)
 
 ![카테고라이징방식](https://user-images.githubusercontent.com/85794900/172645592-68f9043c-63a9-4897-84de-2b43b10c0fd6.png)
 
+![시스템구성도](https://user-images.githubusercontent.com/85794900/172646059-7952dabb-6584-4011-816f-100a306a4de8.png)
 
 
 
