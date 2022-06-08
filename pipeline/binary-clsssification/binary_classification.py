@@ -22,7 +22,7 @@ class BinaryModel():
     tok = None
     
     def __init__(self):
-        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")    
+        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir=".cache")    
         self.tokenizer = get_tokenizer()
         self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
         self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)

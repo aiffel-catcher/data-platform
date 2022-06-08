@@ -1,7 +1,7 @@
 from kafka import KafkaConsumer
 import json
 
-BROKERS = ['34.64.82.186:9092']
+BROKERS = ['34.82.7.168:9092']
 
 
 class MessageConsumer:

@@ -1,8 +1,9 @@
-from common.kafka_producer import MessageProducer
-from common.bigquery_operator import BigQueryClient
+from kafka_producer import MessageProducer
+from bigquery_operator import BigQueryClient
 
 bigquery_client = BigQueryClient()
 message_producer = MessageProducer()
+
 
 def select_keyword_rocket_data():
   return bigquery_client.select_keywords_for_rocket()

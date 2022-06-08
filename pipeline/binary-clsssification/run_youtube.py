@@ -1,14 +1,12 @@
-import os
 import sys
-import pandas as pd
 
-sys.path.append(os.path.abspath('../common'))
+sys.path.insert(0, '../common')
 
-from common.kafka_consumer import MessageConsumer
-from common.logger import Logging
+from kafka_consumer import MessageConsumer
+from logger import Logging
 from binary_classification import BinaryModel, get_related_value
-from common.string_utils import make_hash_id
-from common.operator_factory import insert_data_to_BigQuery, publish_kafka
+from string_utils import make_hash_id
+from operator_factory import insert_data_to_BigQuery, publish_kafka
 
 logger = Logging('binary-classification').getLogger()
 

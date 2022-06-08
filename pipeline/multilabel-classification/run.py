@@ -1,14 +1,12 @@
-import os
 import sys
-import torch
 
-sys.path.append(os.path.abspath('../common'))
+sys.path.insert(0, '../common')
 
-from common.string_utils import make_hash_id
-from common.kafka_consumer import MessageConsumer
-from common.logger import Logging
+from string_utils import make_hash_id
+from kafka_consumer import MessageConsumer
+from logger import Logging
 from multilabel_classification import MultilabelModel, get_category_value
-from common.operator_factory import insert_data_to_BigQuery, select_category_all
+from operator_factory import insert_data_to_BigQuery, select_category_all
 
 
 logger = Logging('multilabel-classification').getLogger()

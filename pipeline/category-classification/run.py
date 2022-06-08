@@ -1,16 +1,14 @@
-import os
 import sys
-import torch
 
-sys.path.append(os.path.abspath('../common'))
+sys.path.insert(0, '../common')
 
-from common.string_utils import make_hash_id
-from common.kafka_consumer import MessageConsumer
-from common.logger import Logging
+from string_utils import make_hash_id
+from kafka_consumer import MessageConsumer
+from logger import Logging
 from category_classification import get_category_value
-from common.operator_factory import insert_data_to_BigQuery, select_category_all
+from operator_factory import insert_data_to_BigQuery, select_category_all
 
-logger = Logging('multilabel-classification').getLogger()
+logger = Logging('category-classification').getLogger()
 
 
 def get_review_category(data, category_map):
@@ -38,7 +36,7 @@ def get_category_map(category):
     return category_map
 
 
-def process_pipeline(data, label_cols):
+def process_pipeline(data, category_map):
     print('~')
     try:
         logger.info('[Pipeline] 멀티라벨분류 모델 파이프라인')
@@ -77,7 +75,7 @@ def run():
                 for message in partition_batch:
                     value = message.value
                     logger.info('[Kafka] 데이터 Subscribe >>>> ', value)
-                    process_pipeline(value)
+                    process_pipeline(value, category_map)
                     consumer.commit()
     except Exception as ex:
         logger.error('[Kafka] error >>>> ', ex)

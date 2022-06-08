@@ -1,6 +1,9 @@
 airflow/credentials
 airflow/dags/.DS_Store
-*/.DS_Store
+.DS_Store
 .python-version
 analysis/logs
 checkpoint.pt
+__pycache__
+.cache
+logs

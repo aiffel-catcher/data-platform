@@ -1,15 +1,15 @@
 from google.cloud import bigquery
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
+import json
 
-credentials = service_account.Credentials.from_service_account_file('./catcher-service-key.json')
 
 class BigQueryClient:
   client = ''
-
+  credentials = service_account.Credentials.from_service_account_file('../common/catcher-service-key.json')
 
   def __init__(self):
-    self.client = bigquery.Client(credentials=credentials, project='aiffel-gn3-6')
+    self.client = bigquery.Client(credentials=self.credentials, project='aiffel-gn3-6')
 
 
   def insert_rows(self, table_name, data):

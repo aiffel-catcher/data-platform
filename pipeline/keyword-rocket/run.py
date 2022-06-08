@@ -1,15 +1,15 @@
-import os
 import sys
 
-sys.path.append(os.path.abspath('../common'))
+sys.path.insert(0, '../common')
 
 import pandas as pd
 from datetime import datetime
-from common.kafka_consumer import MessageConsumer
-from common.logger import Logging
-from common.operator_factory import select_keyword_rocket_data, insert_data_to_BigQuery
+
 from keyword_rocket import calc_keyword_rocket
-from common.string_utils import make_hash_id
+from kafka_consumer import MessageConsumer
+from logger import Logging
+from operator_factory import select_keyword_rocket_data, insert_data_to_BigQuery
+from string_utils import make_hash_id
 
 
 logger = Logging('keyword-rocket').getLogger()
