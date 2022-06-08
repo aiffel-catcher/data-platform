@@ -16,5 +16,5 @@
 4.	어떤 내용이 부정적인지 정확한 데이터를 제공하고자, 실제 리뷰 데이터 원본 제공
 
 ## :raising_hand: Project Detail
-
+![전체진행흐름도](https://user-images.githubusercontent.com/85794900/172643527-295ab654-3e09-47ec-9b4f-0237a3f95d93.png)
 
