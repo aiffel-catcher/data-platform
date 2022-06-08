@@ -17,6 +17,7 @@
 
 ## 🏃 Project Details
 <br>
+
 ![전체진행흐름도](https://user-images.githubusercontent.com/85794900/172643527-295ab654-3e09-47ec-9b4f-0237a3f95d93.png)
 
 ![이진분류](https://user-images.githubusercontent.com/85794900/172643828-f8b1bda9-a01f-41d4-91fd-7c4b0f87044e.png)
