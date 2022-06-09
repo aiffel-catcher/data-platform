@@ -53,13 +53,13 @@
 <img src="https://user-images.githubusercontent.com/85794900/172743788-5efcb201-1f6d-4ad8-b31e-9a54ebdd7f47.JPG" width="1000" height="600"/>
 
 
-# :love_letter: 
-🧡김빈
+# :love_letter:🕊️
+:giraffe: 🧡김빈
 
-:yellow_heart: 노지연
+:hamster: :yellow_heart: 노지연
 
-:heart: 박지호
+:penguin: :heart: 박지호 : 프로젝트를 진행하면서 
 
-:green_heart:신혜지
+:cat: :green_heart:신혜지
 
-💙 홍서영
+:frog: 💙 홍서영
