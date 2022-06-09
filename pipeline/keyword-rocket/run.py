@@ -18,10 +18,10 @@ from string_utils import make_hash_id
 logger = Logging('keyword-rocket').getLogger()
 
 
-def get_keyword_map(data):
+def get_keyword_map(data_df):
   keywords_map = {}
 
-  for d in data:
+  for (i, d) in data_df.iterrows():
     keywords_map[d['keyword']] = d['keyword_id']
 
   return keywords_map
@@ -53,14 +53,15 @@ def process_pipeline():
     logger.info('키워드 급상승 모델 파이프라인')
     # 데이터 가져오기 : 현재 14일치 
     data_from_db = select_keyword_rocket_data() # 	[[keyword_id keyword create_at], ... ]
+    data_df = data_from_db.to_dataframe()
     logger.info('키워드 데이터 가져옴')
 
     # 키워드 급상승 
-    calculated_data = calc_keyword_rocket(data_from_db, 7)
+    calculated_data = calc_keyword_rocket(data_df, 7)
     logger.info('키워드 급상승 집계')
 
     # 데이터 변환
-    keyword_map = get_keyword_map(data_from_db)
+    keyword_map = get_keyword_map(data_df)
     keyword_rockets = get_keyword_rocket(calculated_data, keyword_map)
     logger.info('키워드 급상승 데이터 변환>>>> ' + json.dumps(keyword_rockets))
 

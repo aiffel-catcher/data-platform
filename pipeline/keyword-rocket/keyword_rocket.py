@@ -1,12 +1,9 @@
-import pandas as pd
 from collections import Counter
-from datetime import datetime
 
 
-def create_df(data):
-    data_df = data.to_dataframe()
+def count_keywords(data_df):
     data_df['date'] = data_df['create_at'].apply(
-        lambda c: datetime.fromisoformat(c).strftime('%Y-%m-%d')
+        lambda c: c.strftime('%Y-%m-%d')
     )
 
     data_df = data_df.groupby('date')['keyword'].apply(lambda x: ' '.join(x))
@@ -25,9 +22,8 @@ def sum_counter(counters):
     return total
 
 
-def calc_keyword_rocket(data, days, max_count=None):
-    data_df = create_df(data)
-    print(data_df)
+def calc_keyword_rocket(data_df, days, max_count=None):
+    data_df = count_keywords(data_df)
 
     LEN = len(data_df) - days # days를 제외한 나머지
 
