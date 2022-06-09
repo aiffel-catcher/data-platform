@@ -3,7 +3,8 @@ from collections import Counter
 from datetime import datetime
 
 
-def create_df(data_df):
+def create_df(data):
+    data_df = data.to_dataframe()
     data_df['date'] = data_df['create_at'].apply(
         lambda c: datetime.fromisoformat(c).strftime('%Y-%m-%d')
     )

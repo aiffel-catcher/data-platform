@@ -16,18 +16,19 @@ logger = Logging('category-classification').getLogger()
 
 def get_review_category(data, category_map):
     categories = category_map.keys()
+    result = []
     for category in categories:
         if data[category] == 0:
             continue
 
         category_id = category_map[category]
         review_id = data['review_id']
-        data = {
+        result.append({
             'review_category_id': make_hash_id(review_id + category_id),
             'category_id': category_id,
             'review_id': review_id
-        }
-    return data
+        })
+    return result
 
 
 def get_category_map(category):
@@ -45,7 +46,7 @@ def process_pipeline(data, category_map):
         logger.info('[Pipeline] 멀티라벨분류 모델 파이프라인')
         # 멀티라벨분류 모델
         comment = data['modified_text']
-        result = get_category_value(comment)
+        result = get_category_value([comment])
         logger.info('[Pipeline] 멀티라벨분류 >>>> ' + json.dumps(result))
         for column_name, label in result[0].items():
             data[column_name] = label
@@ -55,7 +56,7 @@ def process_pipeline(data, category_map):
         logger.info('[Pipeline] 리뷰-키워드 데이터 변환>>>> ' + json.dumps(review_category))
 
         # 데이터 삽입
-        insert_data_to_BigQuery('review_category', [get_review_category])
+        insert_data_to_BigQuery('review_category', review_category)
         logger.info('[Pipeline] BigQuery 데이터 저장 완료')
     except Exception:
         logger.error(traceback.format_exc())
