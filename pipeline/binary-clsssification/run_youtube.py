@@ -5,9 +5,10 @@ import traceback
 
 sys.path.insert(0, '../common')
 
+import torch
 from kafka_consumer import MessageConsumer
 from logger import Logging
-from binary_classification import BinaryModel, get_related_value
+from binary_classification import BinaryModelCheckpoint, get_related_value
 from string_utils import make_hash_id
 from operator_factory import insert_data_to_BigQuery
 from kafka_producer import MessageProducer
@@ -21,19 +22,20 @@ def get_review(data, is_socar):
     'review_id': make_hash_id(data['review_id']),
     'origin_text': data['text_original'],
     'modified_text': data['modified_text'],
-    'is_socar': is_socar,
+    'is_socar': int(is_socar),
     'create_at': data['comment_published_at']
   }
   return review
 
  
-def process_pipeline(model, data, messageProducer):
-  print('~')
+def process_pipeline(binaryModelCheckpoint, data, messageProducer, device):
   try:
     logger.info('이진분류 모델 파이프라인')
     # 이진분류
     comment = data['modified_text']
-    result = get_related_value(model, [comment], model.getTok()) # comment: 하나 이상의 문장
+    model = binaryModelCheckpoint.getModel()
+    tok = binaryModelCheckpoint.getTok()
+    result = get_related_value(model, [comment], tok, device) # comment: 하나 이상의 문장
     is_socar = result[0]
     logger.info('이진분류 >>>> ' + str(is_socar))
 
@@ -62,7 +64,8 @@ def run():
   logger.info('[Kafka] get consumer')
   consumer = messageConsumer.getConsumer()
 
-  model = BinaryModel().getModel()
+  device = torch.device('cuda:0')
+  binaryModelCheckpoint = BinaryModelCheckpoint(device)
 
   try:
     while True:
@@ -72,7 +75,7 @@ def run():
         for message in partition_batch:
           value = message.value
           logger.info('[Kafka] 데이터 Subscribe >>>> ' + json.dumps(value))
-          process_pipeline(model, value, messageProducer)
+          process_pipeline(binaryModelCheckpoint, value, messageProducer, device)
           consumer.commit()
   except Exception:
     logger.error(traceback.format_exc())

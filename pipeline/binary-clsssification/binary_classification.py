@@ -14,23 +14,25 @@ from kobert import get_tokenizer
 from kobert import get_pytorch_kobert_model
 
 
-class BinaryModel():
-    CHECKPOINT_PATH = './checkpoint.pt' # binary classification 모델 체크포인트 경로
+class BinaryModelCheckpoint():
+    path = './checkpoint.pt' # binary classification 모델 체크포인트 경로
+    device = None
     bertmodel = None
     vocab = None
     tokenizer = None
     tok = None
     
-    def __init__(self):
+    def __init__(self, device):
         self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir=".cache")    
         self.tokenizer = get_tokenizer()
         self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
-        self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)
+        self.device = device
+        self.loadModel()
 
-    def loadModel(self, device, path):
+    def loadModel(self):
         # 체크포인트 불러오기
-        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(device)
-        checkpoint = torch.load(path, map_location=device)
+        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(self.device)
+        checkpoint = torch.load(self.path, map_location=self.device)
         model.load_state_dict(checkpoint['model_state_dict'])
         self.model = model
 
@@ -92,34 +94,10 @@ class BERTClassifier(nn.Module):
         return self.classifier(out)
 
 
-class BinaryModel():
-    CHECKPOINT_PATH = './checkpoint.pt'  # binary classification 모델 체크포인트 경로
-    tok = None
 
-    def __init__(self):
-        self.bertmodel, self.vocab = get_pytorch_kobert_model(cachedir="~/.cache")
-        self.tokenizer = get_tokenizer()
-        self.tok = nlp.data.BERTSPTokenizer(self.tokenizer, self.vocab, lower=False)
-        self.loadModel(self.DEVICE, self.CHECKPOINT_PATH)
-
-    def loadModel(self, device, path):
-        # 체크포인트 불러오기
-        model = BERTClassifier(self.bertmodel, dr_rate=0.5).to(device)
-        checkpoint = torch.load(path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        self.model = model
-
-    def getModel(self):
-        return self.model
-
-    def getTok(self):
-        return self.tok
-
-
-def get_related_value(model, comment, tok):
+def get_related_value(model, comment, tok, device):
     max_len = 64
     batch_size = 64
-    device = torch.device('cuda:0')
     commnetslist = []  # 텍스트 데이터를 담을 리스트
     rel_list = []  # 관련 여부 값을 담을 리스트
     for c in comment:  # 모든 댓글
