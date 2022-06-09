@@ -1,5 +1,4 @@
 # :oncoming_automobile: AIFFELTHON X SOCAR :oncoming_automobile:
-<br>
 
 * 프로젝트 기간 : 2022.04.20-2022.06.08
 
@@ -18,7 +17,6 @@
 4.	어떤 내용이 부정적인지 정확한 데이터를 제공하고자, 실제 리뷰 데이터 원본 제공
 
 # 🏃 Project Details
-<br>
 
 * Tools
 
@@ -56,4 +54,12 @@
 
 
 # :love_letter: 
+🧡김빈
 
+:yellow_heart: 노지연
+
+:heart: 박지호
+
+:green_heart:신혜지
+
+💙 홍서영
