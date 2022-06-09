@@ -1,8 +1,12 @@
 # :oncoming_automobile: AIFFELTHON X SOCAR :oncoming_automobile:
 
 * 프로젝트 기간 : 2022.04.20-2022.06.08
-
-* 조원 : 김빈, 노지연, 박지호, 신혜지, 홍서영 
+ 
+* 김빈
+* 노지연 : koBERT를 활용한 키워드 추출 모델 구현, 준실시간 데이터 제공을 위한 시스템 자동화 구현 
+* 박지호 
+* 신혜지
+* 홍서영 
 
 # :vertical_traffic_light: Introduction
 <쏘카와 관련된 리뷰 및 후기를 기반으로 한 분석 자동화 시스템 구축하기>
@@ -56,9 +60,9 @@
 # :love_letter:🕊️
 :giraffe: 🧡김빈
 
-:hamster: :yellow_heart: 노지연
+:hamster: :yellow_heart: 노지연 : “쏘카에 대한 리뷰 분석”이란 흥미로운 주제를 가지고 처음에는 어떻게 풀어가야 할지 막막했지만, 마음이 맞는 팀원들과 함께 역경에도 굴하지 않고 끝까지 매진하여 좋은 결과를 도출한 만족스런 프로젝트였습니다.
 
-:penguin: :heart: 박지호 : 프로젝트를 진행하면서 
+:penguin: :heart: 박지호 : 처음 시작은 
 
 :cat: :green_heart:신혜지
 
