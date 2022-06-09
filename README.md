@@ -31,4 +31,4 @@
 
 ## :raising_hand: Results
 ![1페이지](https://user-images.githubusercontent.com/85794900/172743716-cdb6e40b-0911-42bc-979c-c8550424307f.JPG)
-
+![2페이지](https://user-images.githubusercontent.com/85794900/172743788-5efcb201-1f6d-4ad8-b31e-9a54ebdd7f47.JPG)
