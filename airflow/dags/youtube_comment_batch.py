@@ -8,22 +8,104 @@ from airflow import DAG
 from airflow.decorators import dag, task
 from airflow.models import Variable
 from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
+from airflow.exceptions import AirflowException
+from airflow.exceptions import AirflowSkipException
 
-from utils.kafka_producer import MessageProducer
-from utils.string_util import preprocess_sentence, make_review_id
-from utils.time_util import get_execution_date, get_last_updated_at, set_last_updated_at
-from utils.task_util import task_to_fail, task_to_skip
+import re
+import numpy as np
+from random import randrange
+from kafka import KafkaProducer
+import json
 
 
 DAGBAGS_DIR = Variable.get('DAGBAGS_DIR')
 VIDEO_COUNT = 500
 LAST_UPDATED_AT_PATH = f'{DAGBAGS_DIR}/youtube_last_updated_at'
 TEMPORARY_DATA_PATH = f'{DAGBAGS_DIR}/data'
-GCS_BUCKET_NAME = 'aiffel-catcher'
+GCS_BUCKET_NAME = 'aiffel-catcher2'
 
 log = logging.getLogger(__name__)
-api_key = 'AIzaSyC5fTURG5XHsfARuifjEmAlmJkOB5lRf7s'
+api_key = 'AIzaSyCjxJ1WvvXrNUBb2UidLsyincyvK2Bllws'
 api = Api(api_key=api_key)
+
+
+def task_to_fail(error):
+    raise AirflowException("Error message >>>> ", error)
+
+
+def task_to_skip():
+    raise AirflowSkipException
+
+
+def get_execution_date(kwargs):
+    return kwargs['execution_date'].in_timezone('Asia/Seoul')
+
+
+def get_last_updated_at(path):
+    with open(path) as f:
+        last_updated_at= f.read()
+        print('get_last_updated_at >>>> ', last_updated_at)
+        return last_updated_at
+
+
+def set_last_updated_at(datetime_str, path):
+    dt = pendulum.parse(datetime_str, tz="Asia/Seoul")
+    f = open(path, "w")
+    print('set_last_updated_at >>>> ', dt.to_iso8601_string())
+    f.write(dt.to_iso8601_string())
+    f.close()
+
+class MessageProducer:
+    brokers = ""
+    topic = ""
+    producer = None
+
+    def __init__(self, topic):
+        self.brokers = ['34.82.7.168:9092']
+        self.topic = topic
+        self.producer = KafkaProducer(
+            bootstrap_servers=self.brokers,
+            value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+            acks='all',
+            retries = 3
+        )
+
+
+    def send_msg(self, msg):
+        print("sending message")
+        future = self.producer.send(self.topic, msg)
+        self.producer.flush()
+        future.get(timeout=60)
+        print("message sent successfully")
+        return {'status_code':200, 'error':None}
+    
+    def close(self):
+      self.producer.close()
+
+
+def preprocess_sentence(sentence):
+    sentence = sentence.lower() # 영어는 모두 소문자로 변환
+    sentence = re.sub(r'[\s]+', " ", sentence)# 하나 이상의 공백(개행 포함)은 하나의 공백으로 변환
+    sentence = re.sub(r'[.,!?]{2,}', ".", sentence) # 문장부호가 여러 개이면 .으로 변환
+    sentence = re.sub(r'[0-9]+:[0-9]+', "", sentence) # 타임라인(ex 3:40) 제거
+    sentence = re.sub(r"[^0-9a-z가-힣?.,!]+", " ", sentence)# 숫자, 영문자, 한글, 문장부호를 제외한 것은 공백으로 변환 (모음, 자음도 제거)
+    sentence = sentence.strip()
+    # sentence = '<start> ' + sentence + ' <end>' # 앞 뒤로 토큰 추가
+
+    # 한글이 한 글자도 없다면 문장 그대로 넣지 않고 빈 문자열을 넣음
+    if bool(re.search(r'[가-힣]+', sentence)):
+        pass
+    else:
+        sentence = np.nan
+        
+    return sentence
+
+
+def make_review_id(dateString):
+    randomNum = randrange(1000, 10000)
+    datetime = pendulum.parse(dateString, tz="Asia/Seoul")
+    review_id = str(datetime.int_timestamp) + '_' + str(randomNum)
+    return review_id
 
 
 def get_datetime_for_video(datetime_str):

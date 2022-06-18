@@ -7,3 +7,4 @@ checkpoint.pt
 __pycache__
 .cache
 logs
+catcher-service-key.json

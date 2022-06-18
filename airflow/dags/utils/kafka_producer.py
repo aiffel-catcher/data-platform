@@ -9,7 +9,7 @@ class MessageProducer:
     producer = None
 
     def __init__(self, topic):
-        self.brokers = BROKERS
+        self.brokers = ['34.82.7.168:9092']
         self.topic = topic
         self.producer = KafkaProducer(
             bootstrap_servers=self.brokers,

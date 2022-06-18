@@ -24,7 +24,7 @@ def get_review(data, is_socar):
     'origin_text': data['content'],
     'modified_text': data['modified_text'],
     'is_socar': int(is_socar),
-    'create_at': data['at']
+    'create_at': data['at'].replace('T', ' ').replace('Z', '')
   }
   return review
 
